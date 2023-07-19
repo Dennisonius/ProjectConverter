@@ -18,6 +18,73 @@ class CMake (object):
         self.context = {}
         
     def populateCMake (self):
+        """ Generate CMakeLists.txt file for building the project
+        """
+        fpu = 'VFPv4_sp'
+        core = ''
+        
+        if 'STM32F0' in self.project['chip']:
+            core = 'Cortex-M0'
+        elif 'STM32F1' in self.project['chip']:
+            core = 'Cortex-M3'
+        elif 'STM32F2' in self.project['chip']:
+            core = 'Cortex-M3'
+        elif 'STM32F3' in self.project['chip']:
+            core = 'Cortex-M4'
+        elif 'STM32F4' in self.project['chip']:
+            core = 'Cortex-M4'
+        elif 'STM32F7' in self.project['chip']:
+            core = 'Cortex-M7'
+        elif 'STM32L0' in self.project['chip']:
+            core = 'Cortex-M0plus'
+        elif 'STM32L1' in self.project['chip']:
+            core = 'Cortex-M3'
+        elif 'STM32L4' in self.project['chip']:
+            core = 'Cortex-M4'
+
+        with open('CMakeLists.tmpl', 'r') as file:
+            file_content = file.read()
+
+        # Replace the search string with the replace string
+        updated_content = file_content.replace("%project_name%", self.project['name'])
+        updated_content = updated_content.replace("%chip%", self.project['chip'])
+        updated_content = updated_content.replace("%core%", core)
+        updated_content = updated_content.replace("%fpu%", fpu)
+        updated_content = updated_content.replace("%dlib_config%", self.project['dlib_config'])
+        updated_content = updated_content.replace("%dlib_config%", self.project['dlib_config'])
+        updated_content = updated_content.replace("%diag_suppress%", self.project['diag_suppress'])
+        updated_content = updated_content.replace("%diag_error%", self.project['diag_error'])
+        updated_content = updated_content.replace("%sources_base%", self.project['srcs_base'])
+
+        replace_string = ''
+        replace_string_lib = ''
+        for string in self.project['srcs']:
+            if string.endswith('.a'):
+                replace_string_lib += "\t\"${sources_base_path}" + string + "\"\n"
+            else:
+                replace_string += "\t${sources_base_path}" + string + "\n"
+        updated_content = updated_content.replace("%source_file%", replace_string)
+        updated_content = updated_content.replace("%lib_files%", replace_string_lib)
+
+        replace_string = ''
+        for string in self.project['incs']:
+            replace_string += "\t${sources_base_path}" + string + "\n"
+        updated_content = updated_content.replace("%include_dir%", replace_string)
+        replace_string = ''
+        for string in self.project['defs']:
+            replace_string += "\t" + string + "\n"
+        updated_content = updated_content.replace("%preprocessor_defines%", replace_string)
+        updated_content = updated_content.replace("%linker_icf%", self.project['linker_icf'])
+        replace_string = ''
+        for string in self.project['linker_symbols']:
+            replace_string += "--keep " + string + "\n"
+        updated_content = updated_content.replace("%linker_symbol%", replace_string)
+
+        # Write the updated content back to the file
+        with open('CMakeLists.txt', 'w') as file:
+            file.write(updated_content)
+
+    def populateCMake_old (self):
         """ Generate CMakeList.txt file for building the project
         """
 
