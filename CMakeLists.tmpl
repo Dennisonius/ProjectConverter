@@ -9,6 +9,8 @@ project(%project_name%
 
 # Set base path to sources
 set(sources_base_path "%sources_base%")
+# To export compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add the executable for the "my_test" target,
 # specifying its source files
 add_executable(my_test
@@ -42,64 +44,19 @@ target_include_directories(my_test PUBLIC
 
 # Set a preprocessor symbol, usable from "my_test" target (unused symbols: USE_ASM=1)
 target_compile_definitions(my_test PUBLIC 
+	__packed=
+	__no_init=
+	__root=
+	__weak=
 %preprocessor_defines%)
-
-# Set right opt level
-string(REPLACE "-Oh" "-Ohz" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 # Set the compiler flags for the "my_test" target
 target_compile_options(my_test PRIVATE
-	$<$<COMPILE_LANGUAGE:C>:
-	
-	$<$<CONFIG:Release>:	>
-	--dlib_config "${TOOLKIT_DIR}%dlib_config%"
-	--debug 
-	--diag_suppress %diag_suppress%
-	--diag_error %diag_error%
-	--endian=$<TARGET_PROPERTY:ENDIAN>
-	-e
-		# Set the list output
-	-l $<TARGET_FILE_DIR:my_test>
-	--cpu=$<TARGET_PROPERTY:CPU>
-	--fpu=$<TARGET_PROPERTY:FPU>
-	--vla >
+	--target=armv7e-m-none-eabi
+	-mcpu=cortex-m4
+	-mthumb
 
-	# asm compiler flags
-	$<$<COMPILE_LANGUAGE:ASM>:
-	-s+
-	-M<$<ANGLE-R>
-	-w+
-	-r
-	--cpu $<TARGET_PROPERTY:CPU>
-	--fpu $<TARGET_PROPERTY:FPU>
-	-E10000 > )
+    # Путь к тулчейну
+	--sysroot=/home/deo/toolchain/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/arm-none-eabi
+    )
 
-# Set the linker options for the "my_test" target
-target_link_options(my_test PRIVATE
-	$<$<CONFIG:Release>:	>
-
-	%linker_symbol%
-	# Create a map file from the target's ELF
-	--map $<TARGET_FILE:my_test>.map
-
-	# Set the linker script
-	--config $<TARGET_PROPERTY:DEVICE_ICF>
-
-	--semihosting 
-	--entry main_bl 
-	--vfe )
-
-# Add a custom target for `ielftool` to generate additional output
-add_custom_target(ielftool DEPENDS $<TARGET_FILE:my_test>
-	COMMAND ${CMAKE_IAR_ELFTOOL}
-	--silent
-	# Genex evaluates FORMAT property to select the output format
-	--$<TARGET_PROPERTY:ielftool,FORMAT>
-	# Uses the target file as input
-	$<TARGET_FILE:my_test>
-	# Name the output based on the selected format
-	$<TARGET_FILE:my_test>.$<TARGET_PROPERTY:ielftool,FORMAT> )
-
-# Set the custom target FORMAT property
-# to select the desired output format (ihex|srec|bin)
-set_target_properties(ielftool PROPERTIES FORMAT bin)

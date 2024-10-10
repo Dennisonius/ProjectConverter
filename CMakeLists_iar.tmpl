@@ -1,0 +1,105 @@
+cmake_minimum_required(VERSION 3.22)
+
+# Set the project name, [description] and [version],
+# while enabling its required languages
+project(%project_name% 
+	DESCRIPTION "Electricity meter: R32 case, shunt, RS485, dlms protocol support"
+	VERSION 1.0.0
+	LANGUAGES C ASM)
+
+# Set base path to sources
+set(sources_base_path "%sources_base%")
+# Add the executable for the "my_test" target,
+# specifying its source files
+add_executable(my_test
+	# Source files
+%source_file%
+	)
+
+# Add the library for the "my_test" target,
+# specifying its source files
+target_link_libraries(my_test
+	# Library source files
+%lib_files%
+	)
+
+# Set the properties for the "my_test" target
+set_target_properties(my_test PROPERTIES
+	DEVICE        %chip%
+	CPU           %core%
+	FPU           %fpu%
+	ARCHITECTURE  ${CMAKE_SYSTEM_PROCESSOR}
+	ENDIAN        little
+	DEVICE_ICF    "${sources_base_path}%linker_icf%")
+
+
+# Применяется лишь для цели "RequestGenerator":
+target_include_directories(my_test PUBLIC
+	$<$<COMPILE_LANGUAGE:C>:
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+%include_dir%
+	>)
+
+# Set a preprocessor symbol, usable from "my_test" target (unused symbols: USE_ASM=1)
+target_compile_definitions(my_test PUBLIC 
+%preprocessor_defines%)
+
+# Set right opt level
+string(REPLACE "-Oh" "-Ohz" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+# Set the compiler flags for the "my_test" target
+target_compile_options(my_test PRIVATE
+	$<$<COMPILE_LANGUAGE:C>:
+	
+	$<$<CONFIG:Release>:	>
+	--dlib_config "${TOOLKIT_DIR}%dlib_config%"
+	--debug 
+	--diag_suppress %diag_suppress%
+	--diag_error %diag_error%
+	--endian=$<TARGET_PROPERTY:ENDIAN>
+	-e
+		# Set the list output
+	-l $<TARGET_FILE_DIR:my_test>
+	--cpu=$<TARGET_PROPERTY:CPU>
+	--fpu=$<TARGET_PROPERTY:FPU>
+	--vla >
+
+	# asm compiler flags
+	$<$<COMPILE_LANGUAGE:ASM>:
+	-s+
+	-M<$<ANGLE-R>
+	-w+
+	-r
+	--cpu $<TARGET_PROPERTY:CPU>
+	--fpu $<TARGET_PROPERTY:FPU>
+	-E10000 > )
+
+# Set the linker options for the "my_test" target
+target_link_options(my_test PRIVATE
+	$<$<CONFIG:Release>:	>
+
+	%linker_symbol%
+	# Create a map file from the target's ELF
+	--map $<TARGET_FILE:my_test>.map
+
+	# Set the linker script
+	--config $<TARGET_PROPERTY:DEVICE_ICF>
+
+	--semihosting 
+	--entry main_bl 
+	--vfe )
+
+# Add a custom target for `ielftool` to generate additional output
+add_custom_target(ielftool DEPENDS $<TARGET_FILE:my_test>
+	COMMAND ${CMAKE_IAR_ELFTOOL}
+	--silent
+	# Genex evaluates FORMAT property to select the output format
+	--$<TARGET_PROPERTY:ielftool,FORMAT>
+	# Uses the target file as input
+	$<TARGET_FILE:my_test>
+	# Name the output based on the selected format
+	$<TARGET_FILE:my_test>.$<TARGET_PROPERTY:ielftool,FORMAT> )
+
+# Set the custom target FORMAT property
+# to select the desired output format (ihex|srec|bin)
+set_target_properties(ielftool PROPERTIES FORMAT bin)

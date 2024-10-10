@@ -21,13 +21,16 @@ pip install Jinja2
 Run in output dir.
 
 Convert project from IAR:
+
 ```
     python converter.py ewp <path to project root>
 ```
+
 Convert project from ARM's KEIL:
+
 ```
     python converter.py uvprojx <path to project root>
-```	
+```
 
 ## Contributing
 
