@@ -20,17 +20,14 @@ pip install Jinja2
 
 Run in output dir.
 
-Convert project from IAR:
+To convert project:
 
 ```
-    python converter.py ewp <path to project root>
+    python converter.py <project type> <path to project root> <target compiler>
 ```
 
-Convert project from ARM's KEIL:
-
-```
-    python converter.py uvprojx <path to project root>
-```
+project type: "ewp" or "uvprojx"
+target compiler: "iar" or "clang"
 
 ## Contributing
 

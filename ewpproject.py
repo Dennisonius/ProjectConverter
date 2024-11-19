@@ -79,6 +79,8 @@ class EWPProject(object):
         @param xml XML file element tagged 'group'
         @param sources List containing source files
         """
+        if hasattr(xml, 'excluded'):
+            return
         for el in xml.iterchildren(tag='file'):
             if hasattr(el, 'excluded'):
                 continue
