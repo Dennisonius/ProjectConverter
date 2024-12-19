@@ -75,7 +75,7 @@ class CMake (object):
                 replace_string_lib += "\t\"${sources_base_path}" + \
                     string + "\"\n"
             else:
-                replace_string += "\t${sources_base_path}" + string + "\n"
+                replace_string += "    ${SOURCES_BASE_PATH}" + string + "\n"
         updated_content = updated_content.replace(
             "%source_file%", replace_string)
         updated_content = updated_content.replace(
@@ -83,12 +83,12 @@ class CMake (object):
 
         replace_string = ''
         for string in self.project['incs']:
-            replace_string += "\t${sources_base_path}" + string + "\n"
+            replace_string += "    ${SOURCES_BASE_PATH}" + string + "\n"
         updated_content = updated_content.replace(
             "%include_dir%", replace_string)
         replace_string = ''
         for string in self.project['defs']:
-            replace_string += "\t" + string + "\n"
+            replace_string += "    " + string + "\n"
         updated_content = updated_content.replace(
             "%preprocessor_defines%", replace_string)
         updated_content = updated_content.replace(
