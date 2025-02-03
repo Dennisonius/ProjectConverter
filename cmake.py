@@ -61,10 +61,10 @@ class CMake (object):
             "%dlib_config%", self.project['dlib_config'])
         updated_content = updated_content.replace(
             "%dlib_config%", self.project['dlib_config'])
-        updated_content = updated_content.replace(
-            "%diag_suppress%", self.project['diag_suppress'])
-        updated_content = updated_content.replace(
-            "%diag_error%", self.project['diag_error'])
+        updated_content = self.replaceOrDelete(
+            updated_content, "%diag_suppress%", self.project['diag_suppress'])
+        updated_content = self.replaceOrDelete(
+            updated_content, "%diag_error%", self.project['diag_error'])
         updated_content = updated_content.replace(
             "%sources_base%", self.project['srcs_base'])
 
@@ -72,7 +72,7 @@ class CMake (object):
         replace_string_lib = ''
         for string in self.project['srcs']:
             if string.endswith('.a'):
-                replace_string_lib += "\t\"${sources_base_path}" + \
+                replace_string_lib += "\t\"${SOURCES_BASE_PATH}" + \
                     string + "\"\n"
             else:
                 replace_string += "    ${SOURCES_BASE_PATH}" + string + "\n"
@@ -95,13 +95,29 @@ class CMake (object):
             "%linker_icf%", self.project['linker_icf'])
         replace_string = ''
         for string in self.project['linker_symbols']:
-            replace_string += "--keep " + string + "\n"
+            if isinstance(string, str):
+                replace_string += "--keep " + string + "\n"
         updated_content = updated_content.replace(
             "%linker_symbol%", replace_string)
 
         # Write the updated content back to the file
         with open('CMakeLists.txt', 'w') as file:
             file.write(updated_content)
+
+    def replaceOrDelete(self, content, target_string, replacement):
+        if (replacement == ''):
+            # Split the content into lines
+            lines = content.splitlines()
+
+            # Filter out lines that contain the specified string
+            filtered_lines = [
+                line for line in lines if target_string not in line]
+
+            # Join the remaining lines back into a single string
+            content = '\n'.join(filtered_lines)
+        else:
+            content = content.replace(target_string, replacement)
+        return content
 
     def populateCMake_old(self):
         """ Generate CMakeList.txt file for building the project

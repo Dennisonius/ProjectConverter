@@ -33,8 +33,8 @@ class EWPProject(object):
         self.project['defs'] = []
         self.project['incs'] = []
         self.project['dlib_config'] = ''
-        self.project['diag_suppress'] = 'Pe826,Pe068,Pa091,Pe001'
-        self.project['diag_error'] = 'Pe2349,Pe223'
+        self.project['diag_suppress'] = ''
+        self.project['diag_error'] = ''
         self.project['linker_icf'] = ''
         self.project['linker_symbols'] = []
         for settings in self.root.configuration.iterchildren(tag='settings'):
@@ -44,6 +44,10 @@ class EWPProject(object):
                 elif option.name.text == 'CCDefines':
                     for a_define in option.iterchildren(tag='state'):
                         self.project['defs'].append(a_define.text)
+                elif option.name.text == 'CCDiagSuppress':
+                    self.project['diag_suppress'] = str(option.state)
+                elif option.name.text == 'CCDiagError':
+                    self.project['diag_error'] = str(option.state)
                 elif option.name.text == 'CCIncludePath2':
                     for a_include in option.iterchildren(tag='state'):
                         s = a_include.text
@@ -72,7 +76,8 @@ class EWPProject(object):
         print('Project defines: ' + ' '.join(self.project['defs']))
         print('Project srcs: ' + ' '.join(self.project['srcs']))
         print('Project linker icf file:' + self.project['linker_icf'])
-        print('Project linker symbols: ' + ' '.join(self.project['linker_symbols']))
+        print('Project linker symbols: ' + ' '.join(str(item)
+              for item in self.project['linker_symbols']))
 
     def expandGroups(self, xml, sources):
         """ SearchGroups - project folders
